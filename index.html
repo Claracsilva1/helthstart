@@ -75,33 +75,72 @@
         const API_URL = "https://miniature-space-umbrella-5gvwx6r6pv9527jvr-5000.app.github.dev";
 
         function login() {
+            const crm = document.getElementById('crm').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!crm || !password) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
             fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    crm: document.getElementById('crm').value, 
-                    password: document.getElementById('password').value 
-                })
+                body: JSON.stringify({ crm, password })
             })
             .then(response => response.json())
-            .then(data => alert(data.message || data.error))
+            .then(data => {
+                if (data.error) {
+                    alert(`Erro: ${data.error}`);
+                } else {
+                    alert("Login realizado com sucesso!");
+                    localStorage.setItem("token", data.token);
+                }
+            })
             .catch(error => console.error('Erro:', error));
         }
 
         function searchPatient() {
-            fetch(`${API_URL}/exams?cpf_paciente=${document.getElementById('cpf').value}`)
-            .then(response => response.json())
-            .then(data => displayExams(data))
-            .catch(error => console.error('Erro:', error));
+            const cpf = document.getElementById('cpf').value.trim();
+            const token = localStorage.getItem("token");
+
+            if (!cpf) {
+                alert("Por favor, insira um CPF válido.");
+                return;
+            }
+
+            if (!token) {
+                alert("Você precisa estar logado para buscar pacientes.");
+                return;
+            }
+
+            fetch(`${API_URL}/exams?cpf_paciente=${cpf}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erro ao buscar exames. Verifique o CPF e tente novamente.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    document.getElementById('examResults').innerHTML = "<p>Nenhum exame encontrado.</p>";
+                    return;
+                }
+                displayExams(data);
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                document.getElementById('examResults').innerHTML = `<p style="color: red;">${error.message}</p>`;
+            });
         }
 
         function displayExams(exams) {
             const examContainer = document.getElementById('examResults');
             examContainer.innerHTML = "";
-            if (exams.length === 0) {
-                examContainer.innerHTML = "<p>Nenhum exame encontrado.</p>";
-                return;
-            }
+            
             exams.forEach(exam => {
                 const examCard = document.createElement('div');
                 examCard.classList.add('exam-card');
