@@ -4,127 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HealthData - Acesso Médico</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-        }
-        .container {
-            max-width: 400px;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        input, button {
-            width: 100%;
-            margin-top: 10px;
-            padding: 10px;
-        }
-        .hidden {
-            display: none;
-        }
-        .exams-list {
-            margin-top: 20px;
-            text-align: left;
-        }
-        .exam-item {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .error-message {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
 </head>
 <body>
-    <div class="container" id="loginContainer">
-        <h2>Login Médico</h2>
-        <input type="text" id="crm" placeholder="CRM" required>
-        <input type="password" id="password" placeholder="Senha" required>
-        <button onclick="login()">Entrar</button>
-    </div>
+    <h2>Login Médico</h2>
+    <input type="text" id="crm" placeholder="CRM">
+    <input type="password" id="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
 
-    <div class="container hidden" id="searchContainer">
-        <h2>Buscar Paciente</h2>
-        <input type="text" id="cpf" placeholder="CPF do Paciente (000.000.000-00)">
-        <button onclick="searchPatient()">Buscar</button>
-        <div class="exams-list" id="examResults"></div>
-    </div>
+    <h2>Buscar Paciente</h2>
+    <input type="text" id="cpf" placeholder="CPF">
+    <button onclick="searchPatient()">Buscar</button>
+    <div id="examResults"></div>
 
     <script>
-        // 🔥 TROQUE ESTA URL PELA URL PÚBLICA DA API NO CODESPACES OU RENDER!
-        const API_URL = "https://seu-codespace-1234-5000.githubpreview.dev"; 
+       const API_URL = "https://miniature-space-umbrella-5gvwx6r6pv9527jvr-5000.app.github.dev";
 
         function login() {
-            const crm = document.getElementById('crm').value;
-            const password = document.getElementById('password').value;
-
-            if (!crm || !password) {
-                alert("Por favor, preencha o CRM e a senha.");
-                return;
-            }
-
             fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ crm: crm, password: password })
+                body: JSON.stringify({ crm: document.getElementById('crm').value, password: document.getElementById('password').value })
             })
             .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert('Login bem-sucedido!');
-                    document.getElementById('loginContainer').classList.add('hidden');
-                    document.getElementById('searchContainer').classList.remove('hidden');
-                } else {
-                    alert('Erro: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao conectar com a API. Verifique se a API está online.');
-            });
+            .then(data => alert(data.message || data.error))
+            .catch(error => console.error('Erro:', error));
         }
 
         function searchPatient() {
-            let cpf = document.getElementById('cpf').value.trim();
-
-            if (!cpf.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
-                alert("Por favor, insira um CPF válido no formato 000.000.000-00.");
-                return;
-            }
-
-            fetch(`${API_URL}/exams?cpf_paciente=${cpf}`)
+            fetch(`${API_URL}/exams?cpf_paciente=${document.getElementById('cpf').value}`)
             .then(response => response.json())
-            .then(data => {
-                let resultHTML = "<h3>Exames Disponíveis:</h3>";
-
-                if (data.exames) {
-                    data.exames.forEach(exam => {
-                        resultHTML += `
-                            <div class="exam-item">
-                                <p><b>Tipo:</b> ${exam.tipo}</p>
-                                <p><b>Data:</b> ${exam.data}</p>
-                                <p><b>Laboratório:</b> ${exam.hospital}</p>
-                                <p><a href="${exam.link}" target="_blank">🔗 Baixar Exame</a></p>
-                            </div>`;
-                    });
-                } else {
-                    resultHTML = "<p class='error-message'>Nenhum exame encontrado para este CPF.</p>";
-                }
-
-                document.getElementById('examResults').innerHTML = resultHTML;
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                document.getElementById('examResults').innerHTML = "<p class='error-message'>Erro ao buscar exames. Tente novamente.</p>";
-            });
+            .then(data => document.getElementById('examResults').innerHTML = JSON.stringify(data))
+            .catch(error => console.error('Erro:', error));
         }
     </script>
 </body>
